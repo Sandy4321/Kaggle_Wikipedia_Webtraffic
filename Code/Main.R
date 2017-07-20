@@ -8,6 +8,7 @@ library(hydroGOF)  # for calculating rmse
 library(forecastxgb)
 library(stringr)
 library(smooth)
+library(microbenchmark)
 
 source("Code/func_forecasts.R")
 source("Code/func_evaluation.R")
@@ -38,8 +39,11 @@ df_test <- filter(df_data, Date > last_day_train)
 ts_train <- df_train %>%
   select(-Page) %>%
   tk_ts(start = 201507)
-
+microbenchmark(
 forecast_results <- multiple_forecasts(df_train, df_test)
+)
+
+# -- calc error metric smape
 mean(calc_sm(forecast_results$y, forecast_results$p_ets), na.rm = TRUE)
 
 # -- Write CSV File of forecasts for plotting in shiny

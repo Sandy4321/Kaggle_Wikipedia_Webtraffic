@@ -10,11 +10,10 @@ library(stringr)
 library(smooth)
 
 source("Code/func_forecasts.R")
+source("Code/func_evaluation.R")
 
 # -- Read the data
 df_data <- read_csv("Data/train_1.csv") 
-
-
 
 # -- get one example
 df_data <- df_data %>%
@@ -36,16 +35,14 @@ last_day_train <- max(df_data$Date) - forecast_horizon - 1
 df_train <- filter(df_data, Date <= last_day_train)
 df_test <- filter(df_data, Date > last_day_train)
 
-# -- plot the example
-ggplot(df_train, aes(x = Date, y = y)) +
-  geom_line()
-
 ts_train <- df_train %>%
   select(-Page) %>%
   tk_ts(start = 201507)
 
 forecast_results <- multiple_forecasts(df_train, df_test)
+mean(calc_sm(forecast_results$y, forecast_results$p_ets), na.rm = TRUE)
 
+# -- Write CSV File of forecasts for plotting in shiny
 write_delim(forecast_results, 
             path = "Shiny_Kaggle_Webtraffic/Data/forecast_results.csv",
             delim = ";")

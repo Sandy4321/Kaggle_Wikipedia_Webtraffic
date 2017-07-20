@@ -50,12 +50,3 @@ write_delim(forecast_results,
             path = "Shiny_Kaggle_Webtraffic/Data/forecast_results.csv",
             delim = ";")
 
-
-
-  
-  
-   
-   
-  
-
-

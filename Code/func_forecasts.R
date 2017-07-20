@@ -111,7 +111,7 @@ create_forecast <- function(df_train, df_test, func, func_args = list()) {
     df_to_ts()
   
   #-- Data Argument for es from smooth package is called data
-  if(func == "es") {
+  if (func == "es"){
     func_args[["data"]] <- ts_train
   } else {
     func_args[["y"]] <- ts_train
@@ -123,19 +123,19 @@ create_forecast <- function(df_train, df_test, func, func_args = list()) {
     
   # -- gbar and nnetar return slightly different values and therefore are 
   # -- handled in a different manner
-    if(func %in% list("xgbar", "nnetar")) 
+    if (func %in% list("xgbar", "nnetar")) 
     {
       pred <- do.call(func, args = func_args) %>%
         forecast(h = h) 
       pred$mean %>% as_tibble() %>%
-        select_(.dots=setNames(paste0("x"), method_name)) %>%
+        select_(.dots = setNames(paste0("x"), method_name)) %>%
         return()
     } 
     else {
       do.call(func, args = func_args) %>%
         forecast(h = h) %>%
         as_tibble() %>%
-        select_(.dots=setNames(paste0("`Point Forecast`"), method_name)) %>%
+        select_(.dots = setNames(paste0("`Point Forecast`"), method_name)) %>%
         return()
     }
 }

@@ -44,19 +44,13 @@ ts_train <- df_train %>%
   select(-Page) %>%
   tk_ts(start = 201507)
 
-mod_arima <- auto.arima(ts_train)
-forecasts <- forecast::forecast(mod_arima, h = 10) %>%
-  tk_tbl() %>%
-  select(y_hat = `Point Forecast`)
+forecast_results <- multiple_forecasts(df_train, df_test)
 
-tk_tbl(ts_train, timekit_idx = TRUE)
+write_delim(forecast_results, 
+            path = "Shiny_Kaggle_Webtraffic/Data/forecast_results.csv",
+            delim = ";")
 
-future_dates <- tk_make_future_timeseries(df_train$Date, 10)
 
-multiple_forecasts(df_train, df_test)
-
-tibble(future_dates) %>%
-  bind_cols(forecasts)
 
   
   

@@ -26,7 +26,7 @@ dfToTs <- function(data, value, freq = 12) {
 
 df_to_ts <- function(data, value) {
   ts_train <- df_train %>%
-    select(-Page) %>%
+    select(-Page,) %>%
     tk_ts(start = 201507)
   return(ts_train)
 }
@@ -143,18 +143,21 @@ create_forecast <- function(df_train, df_test, func, func_args = list()) {
 forecast_ensemble <- function(current_results) {
   
   # -- stack all forecasting models
-  experts <- current_results %>%
+  experts <- current_results %>% 
     select(., starts_with("p_")) %>%
     as.matrix()
   
   test_data_ts <- current_results %>%
-    df_to_ts()
+    select(Date, y) %>%
+    tk_ts() 
+    
+  dates <- current_results$Date
   
   mix <- mixture(Y = test_data_ts, experts = experts, model = "OGD", 
                  loss.type = "percentage")
-  p_mix <- ts(predict(mix, experts, test_data_ts, type='response'), 
-              start = c(2015, 07), frequency = 12)
-  
+  p_mix <- predict(mix, experts, test_data_ts, type ='response') %>%
+    tk_ts() %>%
+    tk_tbl()
   
   ensemble_result <- as_tibble(p_mix) %>%
     rename(p_ensemble = `Series 1`)

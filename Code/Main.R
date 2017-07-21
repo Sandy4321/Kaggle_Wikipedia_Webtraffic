@@ -13,13 +13,18 @@ library(microbenchmark)
 source("Code/func_forecasts.R")
 source("Code/func_evaluation.R")
 
+set.seed(999)
+
 # -- Read the data
 df_data <- read_csv("Data/train_1.csv") 
+
+example_articles <- c("2NE1_zh.wikipedia.org_all-access_spider",
+                      "2PM_zh.wikipedia.org_all-access_spider")
 
 # -- get one example
 df_data <- df_data %>%
   # -- choose one example 
-  filter(Page == "2NE1_zh.wikipedia.org_all-access_spider") %>%
+  filter(Page %in% example_articles) %>%
   # -- Transform data to long format
   gather( key = Date,  value = y, -Page) %>%
   # -- Transform date to date datatype
@@ -36,12 +41,43 @@ last_day_train <- max(df_data$Date) - forecast_horizon - 1
 df_train <- filter(df_data, Date <= last_day_train)
 df_test <- filter(df_data, Date > last_day_train)
 
-ts_train <- df_train %>%
-  select(-Page) %>%
-  tk_ts(start = 201507)
-microbenchmark(
-forecast_results <- multiple_forecasts(df_train, df_test)
+train_test_for <- function() {
+
+  df_forecast_results <- tibble()
+  for (i in 1:length(example_articles)) {
+    df_forecast_results <- multiple_forecasts(df_train, df_test, example_articles[i]) %>%
+      bind_rows(., df_forecast_results)
+  }
+}
+
+train_test_par <- function() {
+library(doParallel)
+cl = makeCluster(4)
+registerDoParallel(cl)
+df_forecast_results <- foreach(i = 1:length(example_articles),
+        .combine = bind_rows,
+        .export = c("multiple_forecasts",
+                    "start_test",
+                    "df_train",
+                    "df_test",
+                    "example_articles",
+                    "create_forecast", 
+                    "df_to_ts",
+                    "forecast_prophet"),
+        .packages = c("tidyverse", "timekit", "forecast", "forecastxgb",
+                      "smooth", "prophet", "stringr", "opera")) %dopar%
+  multiple_forecasts(df_train, df_test, example_articles[i])
+stopCluster(cl)
+}
+
+res_benchmark <- microbenchmark(
+  #train_test_for(),
+  train_test_par()
+, times = 1L
 )
+
+df_forecast_results
+
 
 # -- calc error metric smape
 mean(calc_sm(forecast_results$y, forecast_results$p_ets), na.rm = TRUE)

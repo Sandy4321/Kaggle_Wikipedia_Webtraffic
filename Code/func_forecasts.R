@@ -50,7 +50,12 @@ df_to_ts <- function(data, value) {
 # @return current_results: Das Dataframe mit den Forecasts für die Testdaten.
 # ------------------------------------------------------------------------------
 
-multiple_forecasts <- function(df_current_train, df_current_test) {
+multiple_forecasts <- function(df_train, df_test, article) {
+  
+  df_current_train <- df_train %>%
+    filter(Page == article )
+  df_current_test <- df_test %>%
+    filter(Page == article)
   # -- Create all Forecasts from forecast package
   current_results <- df_current_test %>%
     # -- Holt Winters with additive seasonal component --

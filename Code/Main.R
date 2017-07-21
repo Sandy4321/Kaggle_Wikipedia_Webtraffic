@@ -18,8 +18,10 @@ set.seed(999)
 # -- Read the data
 df_data <- read_csv("Data/train_1.csv") 
 
-example_articles <- c("2NE1_zh.wikipedia.org_all-access_spider",
-                      "2PM_zh.wikipedia.org_all-access_spider")
+example_articles <- df_data %>%
+  select(Page) %>%
+  head(4) %>%
+  pull()
 
 # -- get one example
 df_data <- df_data %>%
@@ -28,7 +30,8 @@ df_data <- df_data %>%
   # -- Transform data to long format
   gather( key = Date,  value = y, -Page) %>%
   # -- Transform date to date datatype
-  mutate(Date = as.Date(Date))
+  mutate(Date = as.Date(Date)) %>%
+  mutate(y = if_else(y > 0, y, 1L))
 
 start_test <- date("2016-11-02")
 end_test <- date("2016-12-31")
@@ -63,7 +66,8 @@ df_forecast_results <- foreach(i = 1:length(example_articles),
                     "example_articles",
                     "create_forecast", 
                     "df_to_ts",
-                    "forecast_prophet"),
+                    "forecast_prophet",
+                    "forecast_ensemble"),
         .packages = c("tidyverse", "timekit", "forecast", "forecastxgb",
                       "smooth", "prophet", "stringr", "opera")) %dopar%
   multiple_forecasts(df_train, df_test, example_articles[i])
@@ -71,7 +75,7 @@ stopCluster(cl)
 }
 
 res_benchmark <- microbenchmark(
-  #train_test_for(),
+  train_test_for(),
   train_test_par()
 , times = 1L
 )

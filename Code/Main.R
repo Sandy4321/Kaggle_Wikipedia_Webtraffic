@@ -20,7 +20,7 @@ df_data <- read_csv("Data/train_1.csv")
 
 example_articles <- df_data %>%
   select(Page) %>%
-  head(4) %>%
+  head(3) %>%
   pull()
 
 # -- get one example
@@ -51,6 +51,7 @@ train_test_for <- function() {
     df_forecast_results <- multiple_forecasts(df_train, df_test, example_articles[i]) %>%
       bind_rows(., df_forecast_results)
   }
+  return(df_forecast_results)
 }
 
 train_test_par <- function() {
@@ -70,13 +71,15 @@ df_forecast_results <- foreach(i = 1:length(example_articles),
                     "forecast_ensemble"),
         .packages = c("tidyverse", "timekit", "forecast", "forecastxgb",
                       "smooth", "prophet", "stringr", "opera")) %dopar%
-  multiple_forecasts(df_train, df_test, example_articles[i])
+  multiple_forecasts(df_train
+                     , df_test, example_articles[i])
 stopCluster(cl)
+return(df_forecast_results)
 }
 
 res_benchmark <- microbenchmark(
-  train_test_for(),
-  train_test_par()
+  for_forecasts = train_test_for(),
+  par_forecasts = train_test_par()
 , times = 1L
 )
 
